@@ -2,47 +2,137 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Auditiony | Pro Trainer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditiony | The Complete 12-Key Gauntlet</title>
     <style>
-        :root { --gold: #ffd700; --bg: #0f0f0f; --sidebar-bg: #1a1a1a; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        :root { 
+            --gold: #ffd700; 
+            --dark-gold: #b8860b;
+            --bg: #0f0f0f; 
+            --sidebar-bg: #161616; 
+            --card-bg: #222;
+        }
+
+        body { 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            background: var(--bg); 
+            color: white; 
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
         
-        #sidebar { width: 320px; background: var(--sidebar-bg); border-right: 1px solid #333; padding: 25px; display: flex; flex-direction: column; gap: 20px; z-index: 100; }
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        /* --- Sidebar UI --- */
+        #sidebar { 
+            width: 320px; 
+            background: var(--sidebar-bg); 
+            border-right: 1px solid #333; 
+            padding: 25px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            z-index: 100;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        h1 { 
+            font-size: 1.8rem; margin: 0; font-weight: 900; letter-spacing: -1px;
+            background: linear-gradient(to bottom, var(--gold), #fff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
 
         .setting-group { display: flex; flex-direction: column; gap: 8px; }
         label { font-size: 0.7rem; text-transform: uppercase; color: var(--gold); font-weight: bold; letter-spacing: 1px; }
-        select, input[type=range] { background: #333; color: white; border: 1px solid #444; padding: 10px; border-radius: 8px; }
         
-        #timer { font-size: 2.5rem; font-weight: 200; margin: 15px 0; height: 50px; color: var(--gold); }
-        .scale-container { display: flex; gap: 8px; margin-bottom: 40px; flex-wrap: wrap; justify-content: center; max-width: 95%; }
+        select, input[type=range] { 
+            background: #2a2a2a; color: white; border: 1px solid #444; 
+            padding: 12px; border-radius: 8px; font-size: 0.9rem; outline: none;
+        }
+
+        .checkbox-row { display: flex; flex-direction: column; gap: 12px; margin-top: 5px; }
+        .toggle-item { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; }
+        .toggle-item input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--gold); }
         
-        .note-card { padding: 12px 4px; background: #222; border: 1px solid #333; border-radius: 10px; text-align: center; width: 55px; transition: all 0.2s; opacity: 0.15; }
-        .note-card.target { opacity: 1; border-color: var(--gold); transform: translateY(-8px); }
+        button#startBtn { 
+            padding: 18px; background: var(--gold); border: none; border-radius: 12px; 
+            font-weight: 900; font-size: 1rem; cursor: pointer; color: #000;
+            transition: all 0.2s; text-transform: uppercase; margin-top: 10px;
+        }
+        button#startBtn:hover:not(:disabled) { background: #fff; transform: translateY(-2px); }
+        button#startBtn:disabled { background: #444; color: #888; cursor: not-allowed; }
+
+        /* --- Main Stage --- */
+        .main-content { 
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 40px;
+            position: relative;
+        }
+
+        #timer { 
+            font-size: 3.5rem; font-weight: 200; margin-bottom: 30px; 
+            height: 70px; color: var(--gold); text-align: center;
+        }
+
+        .scale-container { 
+            display: flex; gap: 10px; margin-bottom: 60px; 
+            flex-wrap: wrap; justify-content: center; max-width: 1000px;
+        }
+        
+        .note-card { 
+            padding: 15px 5px; background: var(--card-bg); border: 1px solid #333; 
+            border-radius: 12px; text-align: center; width: 65px; 
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+            opacity: 0.1; transform: scale(0.9);
+        }
+        .note-card.visible { opacity: 0.3; transform: scale(1); }
+        .note-card.target { 
+            opacity: 1; border-color: var(--gold); transform: translateY(-15px) scale(1.1); 
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+            background: #2a2a2a;
+        }
         .note-card.success { background: #1a472a; border-color: #2ecc71; opacity: 1; }
         .note-card.fail { background: #4a1a1a; border-color: #e74c3c; opacity: 1; }
         
-        .fingering-hint { display: block; font-size: 0.65rem; color: var(--gold); margin-top: 4px; font-weight: bold; }
+        .note-name { font-size: 1.2rem; font-weight: 900; display: block; margin-bottom: 5px; }
+        .fingering-hint { display: block; font-size: 0.75rem; color: var(--gold); font-weight: bold; }
         .hidden { display: none !important; }
 
-        .trumpet-container { display: flex; gap: 25px; background: #1a1a1a; padding: 35px 50px; border-radius: 35px; border: 1px solid #333; }
-        .valve { width: 55px; height: 100px; background: linear-gradient(to bottom, var(--gold), #b8860b); border-radius: 12px; transition: transform 0.05s; border: 2px solid rgba(0,0,0,0.2); }
-        .valve.pressed { transform: translateY(22px); filter: brightness(1.2); }
+        /* --- Instrument Visuals --- */
+        .trumpet-container { 
+            display: flex; gap: 30px; background: #1a1a1a; 
+            padding: 40px 60px; border-radius: 40px; border: 1px solid #333; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        .valve-housing { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .valve-housing span { font-size: 0.7rem; color: #555; font-weight: 900; }
+        .valve { 
+            width: 60px; height: 110px; background: linear-gradient(to bottom, var(--gold), var(--dark-gold)); 
+            border-radius: 15px; transition: transform 0.08s; border: 2px solid rgba(0,0,0,0.3);
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+        }
+        .valve.pressed { transform: translateY(25px); filter: brightness(1.2); box-shadow: inset 0 5px 15px rgba(0,0,0,0.5); }
 
-        button#startBtn { padding: 15px; background: var(--gold); border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: #000; }
-        #scoreDisplay { font-size: 2.2rem; color: var(--gold); font-weight: bold; margin-top: 15px; }
+        #scoreDisplay { font-size: 2.5rem; color: var(--gold); font-weight: 900; margin-top: 20px; text-shadow: 0 0 20px rgba(255,215,0,0.4); }
+        #progressInfo { color: #888; font-size: 0.9rem; font-weight: 500; }
     </style>
 </head>
 <body>
 
     <aside id="sidebar">
         <h1>Auditiony</h1>
+        
         <div class="setting-group">
-            <label>Scale Key</label>
+            <label>Current Key</label>
             <select id="scaleSelect"></select>
         </div>
+
         <div class="setting-group">
-            <label>Mode</label>
+            <label>Routine Mode</label>
             <select id="modeSelect">
                 <option value="standard">Standard Scale</option>
                 <option value="full">Up & Down</option>
@@ -50,38 +140,62 @@
                 <option value="fullArp">Full + Arpeggio</option>
             </select>
         </div>
+
         <div class="setting-group">
-            <label>Tempo: <span id="bpmVal" style="color:white">108</span> BPM</label>
-            <input type="range" id="bpmSlider" min="40" max="180" value="108">
+            <label>Tempo: <span id="bpmVal" style="color:white">100</span> BPM</label>
+            <input type="range" id="bpmSlider" min="40" max="220" value="100">
         </div>
-        <div class="setting-group">
-            <label><input type="checkbox" id="flowMode"> Gauntlet Mode</label>
-            <label><input type="checkbox" id="showHints" checked> Show Fingerings</label>
+
+        <div class="checkbox-row">
+            <label class="toggle-item">
+                <input type="checkbox" id="flowMode"> Gauntlet (Play all 12)
+            </label>
+            <label class="toggle-item">
+                <input type="checkbox" id="showHints" checked> Show Fingerings
+            </label>
         </div>
+
         <button id="startBtn">Start Trainer</button>
-        <div id="scoreDisplay"></div>
+        
+        <div style="text-align: center; margin-top: auto; padding-top: 20px; border-top: 1px solid #333;">
+            <div id="scoreDisplay"></div>
+            <div id="progressInfo"></div>
+        </div>
     </aside>
 
     <main class="main-content">
         <div id="timer">Ready?</div>
         <div class="scale-container" id="scaleDisplay"></div>
+
         <div class="trumpet-container">
-            <div id="v1" class="valve"></div>
-            <div id="v2" class="valve"></div>
-            <div id="v3" class="valve"></div>
+            <div class="valve-housing"><span>1</span><div id="v1" class="valve"></div></div>
+            <div class="valve-housing"><span>2</span><div id="v2" class="valve"></div></div>
+            <div class="valve-housing"><span>3</span><div id="v3" class="valve"></div></div>
         </div>
+        
+        <p style="color: #444; margin-top: 30px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;">
+            Use Left / Down / Right Arrow Keys
+        </p>
     </main>
 
     <script>
+        /**
+         * THE COMPLETE 12-KEY TRUMPET MAP
+         * n: Name, f: Frequency (Hz), k: Valve Keys
+         */
         const allScales = {
             "C Major":  [{n:"C",f:261.63,k:[]}, {n:"D",f:293.66,k:[1,3]}, {n:"E",f:329.63,k:[1,2]}, {n:"F",f:349.23,k:[1]}, {n:"G",f:392.00,k:[]}, {n:"A",f:440.00,k:[1,2]}, {n:"B",f:493.88,k:[2]}, {n:"C2",f:523.25,k:[]}],
             "G Major":  [{n:"G",f:196.00,k:[]}, {n:"A",f:220.00,k:[1,2]}, {n:"B",f:246.94,k:[2]}, {n:"C",f:261.63,k:[]}, {n:"D",f:293.66,k:[1]}, {n:"E",f:329.63,k:[]}, {n:"F#",f:369.99,k:[2]}, {n:"G2",f:392.00,k:[]}],
             "D Major":  [{n:"D",f:293.66,k:[1,3]}, {n:"E",f:329.63,k:[1,2]}, {n:"F#",f:369.99,k:[2]}, {n:"G",f:392.00,k:[]}, {n:"A",f:440.00,k:[1,2]}, {n:"B",f:493.88,k:[2]}, {n:"C#",f:554.37,k:[1,2]}, {n:"D2",f:587.33,k:[1]}],
             "A Major":  [{n:"A",f:220.00,k:[1,2]}, {n:"B",f:246.94,k:[2]}, {n:"C#",f:277.18,k:[1,2]}, {n:"D",f:293.66,k:[1]}, {n:"E",f:329.63,k:[]}, {n:"F#",f:369.99,k:[2]}, {n:"G#",f:415.30,k:[2,3]}, {n:"A2",f:440.00,k:[1,2]}],
             "E Major":  [{n:"E",f:164.81,k:[1,2]}, {n:"F#",f:185.00,k:[2]}, {n:"G#",f:207.65,k:[2,3]}, {n:"A",f:220.00,k:[1,2]}, {n:"B",f:246.94,k:[2]}, {n:"C#",f:277.18,k:[1,2]}, {n:"D#",f:311.13,k:[2]}, {n:"E2",f:329.63,k:[]}],
-            "F Major":  [{n:"F",f:174.61,k:[1]}, {n:"G",f:196.00,k:[]}, {n:"A",f:220.00,k:[1,2]}, {n:"Bb",f:233.08,k:[1]}, {n:"C",f:261.63,k:[]}, {n:"D",f:293.66,k:[1]}, {n:"E",f:329.63,k:[]}, {n:"F2",f:349.23,k:[1]}],
+            "B Major":  [{n:"B",f:246.94,k:[2]}, {n:"C#",f:277.18,k:[1,2]}, {n:"D#",f:311.13,k:[2]}, {n:"E",f:329.63,k:[]}, {n:"F#",f:369.99,k:[2]}, {n:"G#",f:415.30,k:[2,3]}, {n:"A#",f:466.16,k:[1]}, {n:"B2",f:493.88,k:[2]}],
+            "Gb Major": [{n:"Gb",f:185.00,k:[2,3]}, {n:"Ab",f:207.65,k:[2,3]}, {n:"Bb",f:233.08,k:[1]}, {n:"Cb",f:246.94,k:[2]}, {n:"Db",f:277.18,k:[1,2]}, {n:"Eb",f:311.13,k:[2]}, {n:"F",f:349.23,k:[1]}, {n:"Gb2",f:369.99,k:[2,3]}],
+            "Db Major": [{n:"Db",f:277.18,k:[1,2,3]}, {n:"Eb",f:311.13,k:[2,3]}, {n:"F",f:349.23,k:[1]}, {n:"Gb",f:369.99,k:[2,3]}, {n:"Ab",f:415.30,k:[2,3]}, {n:"Bb",f:466.16,k:[1]}, {n:"C",f:523.25,k:[]}, {n:"Db2",f:554.37,k:[1,2]}],
+            "Ab Major": [{n:"Ab",f:207.65,k:[2,3]}, {n:"Bb",f:233.08,k:[1]}, {n:"C",f:261.63,k:[]}, {n:"Db",f:277.18,k:[1,2]}, {n:"Eb",f:311.13,k:[2]}, {n:"F",f:349.23,k:[1]}, {n:"G",f:392.00,k:[]}, {n:"Ab2",f:415.30,k:[2,3]}],
+            "Eb Major": [{n:"Eb",f:155.56,k:[2]}, {n:"F",f:174.61,k:[1]}, {n:"G",f:196.00,k:[]}, {n:"Ab",f:207.65,k:[2,3]}, {n:"Bb",f:233.08,k:[1]}, {n:"C",f:261.63,k:[]}, {n:"D",f:293.66,k:[1]}, {n:"Eb2",f:311.13,k:[2]}],
             "Bb Major": [{n:"Bb",f:233.08,k:[1]}, {n:"C",f:261.63,k:[]}, {n:"D",f:293.66,k:[1]}, {n:"Eb",f:311.13,k:[2]}, {n:"F",f:349.23,k:[1]}, {n:"G",f:392.00,k:[]}, {n:"A",f:440.00,k:[1,2]}, {n:"Bb2",f:466.16,k:[1]}],
-            "Eb Major": [{n:"Eb",f:155.56,k:[2]}, {n:"F",f:174.61,k:[1]}, {n:"G",f:196.00,k:[]}, {n:"Ab",f:207.65,k:[2,3]}, {n:"Bb",f:233.08,k:[1]}, {n:"C",f:261.63,k:[]}, {n:"D",f:293.66,k:[1]}, {n:"Eb2",f:311.13,k:[2]}]
+            "F Major":  [{n:"F",f:174.61,k:[1]}, {n:"G",f:196.00,k:[]}, {n:"A",f:220.00,k:[1,2]}, {n:"Bb",f:233.08,k:[1]}, {n:"C",f:261.63,k:[]}, {n:"D",f:293.66,k:[1]}, {n:"E",f:329.63,k:[]}, {n:"F2",f:349.23,k:[1]}]
         };
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -96,14 +210,14 @@
             
             const filter = audioCtx.createBiquadFilter();
             filter.type = "lowpass";
-            filter.frequency.value = 1000;
+            filter.frequency.value = 1100;
 
             osc.connect(filter);
             filter.connect(gain);
             gain.connect(audioCtx.destination);
             
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.05);
+            gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.05);
             osc.start();
         }
 
@@ -121,8 +235,9 @@
         const flowModeCheck = document.getElementById('flowMode');
         const timerEl = document.getElementById('timer');
         const scoreDisplay = document.getElementById('scoreDisplay');
+        const progressInfo = document.getElementById('progressInfo');
         
-        let isRunning = false, score = 0, currentScaleIdx = 0;
+        let isRunning = false, sessionScore = 0, totalNotesInSession = 0, currentScaleIdx = 0;
         const pressedKeys = new Set();
         const scaleKeys = Object.keys(allScales);
 
@@ -133,82 +248,148 @@
             const mode = modeSelect.value;
             if (mode === 'standard') return base;
             if (mode === 'full') return base.concat([...base].reverse().slice(1));
-            const arp = [0, 2, 4, 7].map(i => base[i]);
+            
+            const arpIdx = [0, 2, 4, 7];
+            const arp = arpIdx.map(i => base[i]);
             const fullArp = arp.concat([...arp].reverse().slice(1));
+            
             if (mode === 'arpeggio') return fullArp;
-            return base.concat([...base].reverse().slice(1)).concat(fullArp);
+            if (mode === 'fullArp') return base.concat([...base].reverse().slice(1)).concat(fullArp);
+            return base;
         }
 
         function renderScale() {
             scaleDiv.innerHTML = "";
-            const data = getSequence(scaleSelect.value);
+            const key = scaleSelect.value;
+            const data = getSequence(key);
             data.forEach((n, i) => {
                 const card = document.createElement('div');
-                card.className = 'note-card'; card.id = `note-${i}`;
-                const hintVisible = hintsCheck.checked ? "" : "hidden";
-                card.innerHTML = `<b>${n.n}</b><br><span class="fingering-hint ${hintVisible}">${n.k.length?n.k.join('•'):'0'}</span>`;
+                card.className = 'note-card visible'; 
+                card.id = `note-${i}`;
+                
+                // Explicitly check hint visibility
+                const hintClass = hintsCheck.checked ? "" : "hidden";
+                const fingerText = n.k.length ? n.k.join('•') : '0';
+                
+                card.innerHTML = `
+                    <span class="note-name">${n.n}</span>
+                    <span class="fingering-hint ${hintClass}">${fingerText}</span>
+                `;
                 scaleDiv.appendChild(card);
             });
         }
 
-        [scaleSelect, modeSelect, hintsCheck, flowModeCheck].forEach(el => el.onchange = renderScale);
+        // Event Listeners for Live Previews
+        [scaleSelect, modeSelect, hintsCheck, flowModeCheck].forEach(el => {
+            el.onchange = () => {
+                renderScale();
+                if (flowModeCheck.checked) {
+                    progressInfo.innerText = "Gauntlet Ready: 12 Keys";
+                } else {
+                    progressInfo.innerText = "";
+                }
+            };
+        });
+
         bpmSlider.oninput = () => document.getElementById('bpmVal').innerText = bpmSlider.value;
         renderScale();
 
         function startSession() {
             if (isRunning) return;
             audioCtx.resume();
-            isRunning = true; startBtn.disabled = true;
-            score = 0;
+            isRunning = true;
+            startBtn.disabled = true;
+            sessionScore = 0;
+            totalNotesInSession = 0;
+            
             currentScaleIdx = flowModeCheck.checked ? 0 : scaleKeys.indexOf(scaleSelect.value);
             runCycle();
         }
 
         function runCycle() {
-            scaleSelect.value = scaleKeys[currentScaleIdx];
+            const scaleName = scaleKeys[currentScaleIdx];
+            scaleSelect.value = scaleName;
             renderScale();
-            const data = getSequence(scaleKeys[currentScaleIdx]);
+            
+            const data = getSequence(scaleName);
             const ms = (60 / bpmSlider.value) * 1000;
+            
+            if (flowModeCheck.checked) {
+                progressInfo.innerText = `Key ${currentScaleIdx + 1} of 12: ${scaleName}`;
+            }
+
             let count = 4;
             const cd = setInterval(() => {
                 timerEl.innerText = count > 0 ? count : "GO!";
                 count--;
-                if (count < -1) { clearInterval(cd); play(0, ms, data); }
+                if (count < -1) { 
+                    clearInterval(cd); 
+                    playNotes(0, ms, data); 
+                }
             }, ms);
         }
 
-        function play(idx, ms, data) {
+        function playNotes(idx, ms, data) {
             if (idx >= data.length) {
                 stopTone();
-                if (flowModeCheck.checked && currentScaleIdx < scaleKeys.length-1) {
-                    currentScaleIdx++; setTimeout(runCycle, 500);
+                totalNotesInSession += data.length;
+                
+                if (flowModeCheck.checked && currentScaleIdx < scaleKeys.length - 1) {
+                    currentScaleIdx++;
+                    setTimeout(runCycle, 600); // Small breath between scales
                 } else {
-                    isRunning = false; startBtn.disabled = false; timerEl.innerText = "Done!";
+                    finish();
                 }
                 return;
             }
+
             const note = data[idx];
             startTone(note.f);
+            
             document.querySelectorAll('.note-card').forEach(c => c.classList.remove('target'));
-            document.getElementById(`note-${idx}`).classList.add('target');
+            const currentCard = document.getElementById(`note-${idx}`);
+            currentCard.classList.add('target');
             timerEl.innerText = note.n;
 
             setTimeout(() => {
-                const cur = Array.from(pressedKeys).sort().join(',');
-                const req = [...note.k].sort().join(',');
-                document.getElementById(`note-${idx}`).classList.add(cur === req ? 'success' : 'fail');
-                if (cur === req) score++;
-                play(idx + 1, ms, data);
+                const currentFingering = Array.from(pressedKeys).sort().join(',');
+                const requiredFingering = [...note.k].sort().join(',');
+                
+                if (currentFingering === requiredFingering) {
+                    currentCard.classList.add('success');
+                    sessionScore++;
+                } else {
+                    currentCard.classList.add('fail');
+                }
+                playNotes(idx + 1, ms, data);
             }, ms);
         }
 
+        function finish() {
+            isRunning = false;
+            startBtn.disabled = false;
+            timerEl.innerText = "FINISH!";
+            const percent = Math.round((sessionScore / totalNotesInSession) * 100);
+            scoreDisplay.innerText = `${percent}%`;
+            progressInfo.innerText = `Final: ${sessionScore}/${totalNotesInSession} notes correct`;
+        }
+
+        // Keyboard Logic
         const keyMap = { 'ArrowLeft': 1, 'ArrowDown': 2, 'ArrowRight': 3 };
         window.onkeydown = (e) => { 
-            if (keyMap[e.code]) { pressedKeys.add(keyMap[e.code]); document.getElementById('v'+keyMap[e.code]).classList.add('pressed'); }
+            if (keyMap[e.code]) { 
+                e.preventDefault();
+                pressedKeys.add(keyMap[e.code]); 
+                document.getElementById('v' + keyMap[e.code]).classList.add('pressed'); 
+            }
         };
         window.onkeyup = (e) => { 
-            if (keyMap[e.code]) { pressedKeys.delete(keyMap[e.code]); document.getElementById('v'+keyMap[e.code]).classList.remove('pressed'); }
+            if (keyMap[e.code]) { 
+                pressedKeys.delete(keyMap[e.code]); 
+                document.getElementById('v' + keyMap[e.code]).classList.remove('pressed'); 
+            }
         };
+
         startBtn.onclick = startSession;
     </script>
 </body>
