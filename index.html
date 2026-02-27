@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Auditiony | Pro Trainer</title>
+    <style>
+        :root { --gold: #ffd700; --bg: #0f0f0f; --sidebar-bg: #1a1a1a; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        #sidebar { width: 320px; background: var(--sidebar-bg); border-right: 1px solid #333; padding: 25px; display: flex; flex-direction: column; gap: 20px; z-index: 100; }
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        .setting-group { display: flex; flex-direction: column; gap: 8px; }
+        label { font-size: 0.7rem; text-transform: uppercase; color: var(--gold); font-weight: bold; letter-spacing: 1px; }
+        select, input[type=range] { background: #333; color: white; border: 1px solid #444; padding: 10px; border-radius: 8px; }
+        
+        #timer { font-size: 2.5rem; font-weight: 200; margin: 15px 0; height: 50px; color: var(--gold); }
+        .scale-container { display: flex; gap: 8px; margin-bottom: 40px; flex-wrap: wrap; justify-content: center; max-width: 95%; }
+        
+        .note-card { padding: 12px 4px; background: #222; border: 1px solid #333; border-radius: 10px; text-align: center; width: 55px; transition: all 0.2s; opacity: 0.15; }
+        .note-card.target { opacity: 1; border-color: var(--gold); transform: translateY(-8px); }
+        .note-card.success { background: #1a472a; border-color: #2ecc71; opacity: 1; }
+        .note-card.fail { background: #4a1a1a; border-color: #e74c3c; opacity: 1; }
+        
+        .fingering-hint { display: block; font-size: 0.65rem; color: var(--gold); margin-top: 4px; font-weight: bold; }
+        .hidden { display: none !important; }
+
+        .trumpet-container { display: flex; gap: 25px; background: #1a1a1a; padding: 35px 50px; border-radius: 35px; border: 1px solid #333; }
+        .valve { width: 55px; height: 100px; background: linear-gradient(to bottom, var(--gold), #b8860b); border-radius: 12px; transition: transform 0.05s; border: 2px solid rgba(0,0,0,0.2); }
+        .valve.pressed { transform: translateY(22px); filter: brightness(1.2); }
+
+        button#startBtn { padding: 15px; background: var(--gold); border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: #000; }
+        #scoreDisplay { font-size: 2.2rem; color: var(--gold); font-weight: bold; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <aside id="sidebar">
+        <h1>Auditiony</h1>
+        <div class="setting-group">
+            <label>Scale Key</label>
+            <select id="scaleSelect"></select>
+        </div>
+        <div class="setting-group">
+            <label>Mode</label>
+            <select id="modeSelect">
+                <option value="standard">Standard Scale</option>
+                <option value="full">Up & Down</option>
+                <option value="arpeggio">Arpeggio Only</option>
+                <option value="fullArp">Full + Arpeggio</option>
+            </select>
+        </div>
+        <div class="setting-group">
+            <label>Tempo: <span id="bpmVal" style="color:white">108</span> BPM</label>
+            <input type="range" id="bpmSlider" min="40" max="180" value="108">
+        </div>
+        <div class="setting-group">
+            <label><input type="checkbox" id="flowMode"> Gauntlet Mode</label>
+            <label><input type="checkbox" id="showHints" checked> Show Fingerings</label>
+        </div>
+        <button id="startBtn">Start Trainer</button>
+        <div id="scoreDisplay"></div>
+    </aside>
+
+    <main class="main-content">
+        <div id="timer">Ready?</div>
+        <div class="scale-container" id="scaleDisplay"></div>
+        <div class="trumpet-container">
+            <div id="v1" class="valve"></div>
+            <div id="v2" class="valve"></div>
+            <div id="v3" class="valve"></div>
+        </div>
+    </main>
+
+    <script>
+        const allScales = {
+            "C Major":  [{n:"C",f:261.63,k:[]}, {n:"D",f:293.66,k:[1,3]}, {n:"E",f:329.63,k:[1,2]}, {n:"F",f:349.23,k:[1]}, {n:"G",f:392.00,k:[]}, {n:"A",f:440.00,k:[1,2]}, {n:"B",f:493.88,k:[2]}, {n:"C2",f:523.25,k:[]}],
+            "G Major":  [{n:"G",f:196.00,k:[]}, {n:"A",f:220.00,k:[1,2]}, {n:"B",f:246.94,k:[2]}, {n:"C",f:261.63,k:[]}, {n:"D",f:293.66,k:[1]}, {n:"E",f:329.63,k:[]}, {n:"F#",f:369.99,k:[2]}, {n:"G2",f:392.00,k:[]}],
+            "D Major":  [{n:"D",f:293.66,k:[1,3]}, {n:"E",f:329.63,k:[1,2]}, {n:"F#",f:369.99,k:[2]}, {n:"G",f:392.00,k:[]}, {n:"A",f:440.00,k:[1,2]}, {n:"B",f:493.88,k:[2]}, {n:"C#",f:554.37,k:[1,2]}, {n:"D2",f:587.33,k:[1]}],
+            "A Major":  [{n:"A",f:220.00,k:[1,2]}, {n:"B",f:246.94,k:[2]}, {n:"C#",f:277.18,k:[1,2]}, {n:"D",f:293.66,k:[1]}, {n:"E",f:329.63,k:[]}, {n:"F#",f:369.99,k:[2]}, {n:"G#",f:415.30,k:[2,3]}, {n:"A2",f:440.00,k:[1,2]}],
+            "E Major":  [{n:"E",f:164.81,k:[1,2]}, {n:"F#",f:185.00,k:[2]}, {n:"G#",f:207.65,k:[2,3]}, {n:"A",f:220.00,k:[1,2]}, {n:"B",f:246.94,k:[2]}, {n:"C#",f:277.18,k:[1,2]}, {n:"D#",f:311.13,k:[2]}, {n:"E2",f:329.63,k:[]}],
+            "F Major":  [{n:"F",f:174.61,k:[1]}, {n:"G",f:196.00,k:[]}, {n:"A",f:220.00,k:[1,2]}, {n:"Bb",f:233.08,k:[1]}, {n:"C",f:261.63,k:[]}, {n:"D",f:293.66,k:[1]}, {n:"E",f:329.63,k:[]}, {n:"F2",f:349.23,k:[1]}],
+            "Bb Major": [{n:"Bb",f:233.08,k:[1]}, {n:"C",f:261.63,k:[]}, {n:"D",f:293.66,k:[1]}, {n:"Eb",f:311.13,k:[2]}, {n:"F",f:349.23,k:[1]}, {n:"G",f:392.00,k:[]}, {n:"A",f:440.00,k:[1,2]}, {n:"Bb2",f:466.16,k:[1]}],
+            "Eb Major": [{n:"Eb",f:155.56,k:[2]}, {n:"F",f:174.61,k:[1]}, {n:"G",f:196.00,k:[]}, {n:"Ab",f:207.65,k:[2,3]}, {n:"Bb",f:233.08,k:[1]}, {n:"C",f:261.63,k:[]}, {n:"D",f:293.66,k:[1]}, {n:"Eb2",f:311.13,k:[2]}]
+        };
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let osc = null, gain = null;
+
+        function startTone(f) {
+            stopTone();
+            osc = audioCtx.createOscillator();
+            gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+            
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = "lowpass";
+            filter.frequency.value = 1000;
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.05);
+            osc.start();
+        }
+
+        function stopTone() {
+            if (gain) gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
+            if (osc) { osc.stop(audioCtx.currentTime + 0.1); osc = null; }
+        }
+
+        const scaleSelect = document.getElementById('scaleSelect');
+        const modeSelect = document.getElementById('modeSelect');
+        const scaleDiv = document.getElementById('scaleDisplay');
+        const bpmSlider = document.getElementById('bpmSlider');
+        const startBtn = document.getElementById('startBtn');
+        const hintsCheck = document.getElementById('showHints');
+        const flowModeCheck = document.getElementById('flowMode');
+        const timerEl = document.getElementById('timer');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        
+        let isRunning = false, score = 0, currentScaleIdx = 0;
+        const pressedKeys = new Set();
+        const scaleKeys = Object.keys(allScales);
+
+        scaleKeys.forEach(k => { let o = document.createElement('option'); o.value=k; o.innerText=k; scaleSelect.appendChild(o); });
+
+        function getSequence(key) {
+            const base = allScales[key];
+            const mode = modeSelect.value;
+            if (mode === 'standard') return base;
+            if (mode === 'full') return base.concat([...base].reverse().slice(1));
+            const arp = [0, 2, 4, 7].map(i => base[i]);
+            const fullArp = arp.concat([...arp].reverse().slice(1));
+            if (mode === 'arpeggio') return fullArp;
+            return base.concat([...base].reverse().slice(1)).concat(fullArp);
+        }
+
+        function renderScale() {
+            scaleDiv.innerHTML = "";
+            const data = getSequence(scaleSelect.value);
+            data.forEach((n, i) => {
+                const card = document.createElement('div');
+                card.className = 'note-card'; card.id = `note-${i}`;
+                const hintVisible = hintsCheck.checked ? "" : "hidden";
+                card.innerHTML = `<b>${n.n}</b><br><span class="fingering-hint ${hintVisible}">${n.k.length?n.k.join('•'):'0'}</span>`;
+                scaleDiv.appendChild(card);
+            });
+        }
+
+        [scaleSelect, modeSelect, hintsCheck, flowModeCheck].forEach(el => el.onchange = renderScale);
+        bpmSlider.oninput = () => document.getElementById('bpmVal').innerText = bpmSlider.value;
+        renderScale();
+
+        function startSession() {
+            if (isRunning) return;
+            audioCtx.resume();
+            isRunning = true; startBtn.disabled = true;
+            score = 0;
+            currentScaleIdx = flowModeCheck.checked ? 0 : scaleKeys.indexOf(scaleSelect.value);
+            runCycle();
+        }
+
+        function runCycle() {
+            scaleSelect.value = scaleKeys[currentScaleIdx];
+            renderScale();
+            const data = getSequence(scaleKeys[currentScaleIdx]);
+            const ms = (60 / bpmSlider.value) * 1000;
+            let count = 4;
+            const cd = setInterval(() => {
+                timerEl.innerText = count > 0 ? count : "GO!";
+                count--;
+                if (count < -1) { clearInterval(cd); play(0, ms, data); }
+            }, ms);
+        }
+
+        function play(idx, ms, data) {
+            if (idx >= data.length) {
+                stopTone();
+                if (flowModeCheck.checked && currentScaleIdx < scaleKeys.length-1) {
+                    currentScaleIdx++; setTimeout(runCycle, 500);
+                } else {
+                    isRunning = false; startBtn.disabled = false; timerEl.innerText = "Done!";
+                }
+                return;
+            }
+            const note = data[idx];
+            startTone(note.f);
+            document.querySelectorAll('.note-card').forEach(c => c.classList.remove('target'));
+            document.getElementById(`note-${idx}`).classList.add('target');
+            timerEl.innerText = note.n;
+
+            setTimeout(() => {
+                const cur = Array.from(pressedKeys).sort().join(',');
+                const req = [...note.k].sort().join(',');
+                document.getElementById(`note-${idx}`).classList.add(cur === req ? 'success' : 'fail');
+                if (cur === req) score++;
+                play(idx + 1, ms, data);
+            }, ms);
+        }
+
+        const keyMap = { 'ArrowLeft': 1, 'ArrowDown': 2, 'ArrowRight': 3 };
+        window.onkeydown = (e) => { 
+            if (keyMap[e.code]) { pressedKeys.add(keyMap[e.code]); document.getElementById('v'+keyMap[e.code]).classList.add('pressed'); }
+        };
+        window.onkeyup = (e) => { 
+            if (keyMap[e.code]) { pressedKeys.delete(keyMap[e.code]); document.getElementById('v'+keyMap[e.code]).classList.remove('pressed'); }
+        };
+        startBtn.onclick = startSession;
+    </script>
+</body>
+</html>
